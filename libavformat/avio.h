@@ -350,6 +350,10 @@ typedef struct AVIOContext {
      * Try to buffer at least this amount of data before flushing it
      */
     int min_packet_size;
+
+    uint8_t isSetKey;
+    uint8_t iv[16];
+    uint8_t key[16];
 } AVIOContext;
 
 /**

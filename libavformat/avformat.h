@@ -2232,6 +2232,14 @@ int av_probe_input_buffer(AVIOContext *pb, AVInputFormat **fmt,
  */
 int avformat_open_input(AVFormatContext **ps, const char *url, AVInputFormat *fmt, AVDictionary **options);
 
+
+/**
+*  return 0 == OK, 1 == error
+*  add by hanhongchang
+*/
+
+int avformat_set_aescbc_decpypt_key(AVFormatContext *s, const uint8_t* key, const uint8_t* iv);
+
 attribute_deprecated
 int av_demuxer_open(AVFormatContext *ic);
 

@@ -51,6 +51,7 @@
 #endif
 #include "riff.h"
 #include "url.h"
+#include "aes.h"
 
 #include "libavutil/ffversion.h"
 const char av_format_ffversion[] = "FFmpeg version " FFMPEG_VERSION;
@@ -277,6 +278,45 @@ static int append_packet_chunked(AVIOContext *s, AVPacket *pkt, int size)
 
         size -= read_size;
     } while (size > 0);
+
+
+    /*------------------hanhongchang--------------*/
+    if (s->isSetKey == 1 && pkt->size > 5)  //add by liangzheng
+	{	
+		int offset = 0;
+		
+		if (pkt->data[0] == 0x0 && pkt->data[1] == 0x0 && pkt->data[2] == 0x1 && pkt->data[3] == 0x0d)  //start NAL 00 00 01 
+		{
+			offset = 4;
+		}
+		else if (pkt->data[0] == 0x0 && pkt->data[1] == 0x0 && pkt->data[2] == 0x0 && pkt->data[3] == 0x1 && pkt->data[4] == 0x0d) //start NAL 00 00 00 01
+		{	
+			offset = 5;	
+		}
+
+		if (offset >= 4)
+		{	
+			uint32_t decrypLen = 0;
+			struct AES_ctx ctx;
+
+			pkt->data[offset - 1] = 0x65;
+			if ((pkt->size - offset) >= 2048)
+			{
+				decrypLen = 2048;
+			}
+			else
+			{
+				decrypLen = 16 * ((pkt->size - offset) / 16);
+			}
+
+			AES_init_ctx_iv(&ctx, s->key, s->iv);
+			AES_CBC_decrypt_buffer(&ctx, pkt->data + offset, decrypLen);
+		}
+	}
+	//----------------------------------------------------------------------------------------------------------------------------
+
+
+
     if (size > 0)
         pkt->flags |= AV_PKT_FLAG_CORRUPT;
 
@@ -504,6 +544,27 @@ FF_ENABLE_DEPRECATION_WARNINGS
         st->internal->need_context_update = 0;
     }
     return 0;
+}
+
+/**
+*  return 0 == OK, 1 == error
+*  add by hanhongchang
+*/
+int avformat_set_aescbc_decpypt_key(AVFormatContext *s, const uint8_t* key, const uint8_t* iv)
+{
+	AVIOContext *pSPB = s->pb;
+
+	if (pSPB)
+	{	
+        printf("set aescbc decpypt key");
+		pSPB->isSetKey = 1;
+		memcpy(pSPB->key, key, 16);
+		memcpy(pSPB->iv, iv, 16);
+
+		return 0;
+	}
+
+	return 1;
 }
 
 
