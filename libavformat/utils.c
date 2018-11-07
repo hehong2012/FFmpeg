@@ -301,7 +301,7 @@ static int append_packet_chunked(AVIOContext *s, AVPacket *pkt, int size)
 			int i = 0;
 			for (i = 0; i < pkt->size - 5; i++)
 			{
-				if (pkt->data[0 + i] == 0x0 && pkt->data[1 + i] == 0x0 && pkt->data[2 + i] == 0x1 && pkt->data[3 + i] == 0x0d)  //兼容 00 00 01 0d   or 00 00 00 01 0d
+				if (pkt->data[0 + i] == 0x0 && pkt->data[1 + i] == 0x0 && pkt->data[2 + i] == 0x1 && ((pkt->data[3 + i] & 0x1F) == 0x0d))  //兼容 00 00 01 0d   or 00 00 00 01 0d
 				{	
 					offset = i + 4;
 					break;
@@ -309,7 +309,7 @@ static int append_packet_chunked(AVIOContext *s, AVPacket *pkt, int size)
 			}
 
 			//match the video frame type
-			if ((i < pkt->size - 5)  &&  pkt->data[offset - 1] == 0x0d)
+			if ((i < pkt->size - 5) && ((pkt->data[offset - 1] & 0x1F) == 0x0d))
 			{
 				uint32_t decrypLen = 0;
 				struct AES_ctx ctx;
